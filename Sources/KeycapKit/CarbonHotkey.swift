@@ -15,9 +15,9 @@ import KeycapCore
 ///
 /// The four-character `signature` plus `identifier` is how this hotkey's
 /// handler recognises its own events among the other handlers installed on the
-/// same application event target. Hotkey events never cross processes, so the
-/// signature only has to be unique within an app; each app passes the constant
-/// it already used so nothing changes for it.
+/// same application event target. It does not make a hotkey private: another
+/// app that registers the same chord is notified too. Each app passes the
+/// constant it already used so nothing changes for it.
 public final class CarbonHotkey: @unchecked Sendable {
 
     /// Signature for a new consumer that has no existing Carbon constant.

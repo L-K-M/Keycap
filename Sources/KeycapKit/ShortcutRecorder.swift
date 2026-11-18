@@ -46,6 +46,10 @@ public struct ShortcutRecorder: NSViewRepresentable {
     }
 
     public func updateNSView(_ nsView: ShortcutRecorderButton, context: Context) {
+        // SwiftUI can hand over a different Binding on each render; rebind so
+        // a recorded combo is written through the current one, not the first.
+        let binding = _combo
+        nsView.onChange = { binding.wrappedValue = $0 }
         nsView.combo = combo
         nsView.deleteAction = deleteAction
         nsView.placeholder = placeholder

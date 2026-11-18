@@ -48,7 +48,7 @@ import KeycapKit
 
 let hotkey = CarbonHotkey(identifier: 1, signature: 0x5A41_5048) // 'ZAPH'
 hotkey.onPressed = { activate() }
-let result = hotkey.register(KeyCombo(keyCode: .tab, modifiers: [.option]))
+let result = hotkey.register(KeyCombo(keyCode: KeyCode.tab, modifiers: [.option]))
 if !result.isRegistered {
     print(result.failureDescription ?? "unavailable")
 }

@@ -50,4 +50,10 @@ final class KeyNamesDisplayTests: XCTestCase {
         let label = KeyNames.label(for: keyEvent(KeyCode.a))
         try XCTSkipUnless(label == "A", "Active layout doesn't map ANSI-A to 'A'")
     }
+
+    func testOutOfRangeKeyCodeFallsBackInsteadOfTrapping() {
+        XCTAssertNil(KeyNames.layoutName(for: UInt32.max))
+        XCTAssertEqual(KeyNames.displayName(for: UInt32.max),
+                       KeyNames.fallbackName(for: UInt32.max))
+    }
 }

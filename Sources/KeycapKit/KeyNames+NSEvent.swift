@@ -8,6 +8,9 @@ extension KeyNames {
     /// uppercased, or nil for non-printing keys. Uses
     /// `kUCKeyTranslateNoDeadKeysMask` so a dead-key state is never set.
     public static func layoutName(for keyCode: UInt32) -> String? {
+        // Virtual key codes are 16-bit; a corrupt stored value must degrade to
+        // the fallback name rather than trap in `UInt16(_:)`.
+        guard let virtualKey = UInt16(exactly: keyCode) else { return nil }
         guard let source = TISCopyCurrentKeyboardLayoutInputSource()?
                 .takeRetainedValue(),
               let property = TISGetInputSourceProperty(
@@ -22,7 +25,7 @@ extension KeyNames {
         var length = 0
         var buffer = [UniChar](repeating: 0, count: 4)
         let status = UCKeyTranslate(
-            layout, UInt16(keyCode), UInt16(kUCKeyActionDisplay), 0,
+            layout, virtualKey, UInt16(kUCKeyActionDisplay), 0,
             UInt32(LMGetKbdType()),
             OptionBits(UInt32(kUCKeyTranslateNoDeadKeysMask)),
             &deadKeys, buffer.count, &length, &buffer)
