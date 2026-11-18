@@ -13,7 +13,7 @@ Released into the public domain; see `LICENSE`.
 | Gans | `KeyCombo` model, `CarbonHotkey`, `ShortcutRecorder` |
 | Top Drawer | `KeyCombo` model, `CarbonHotkeyRegistrar`, `ShortcutRecorder` |
 | Invoque | `KeyCombo` model, `CarbonHotkey`, `AccessibilityAuthorizer`; keeps its own recorder UI |
-| Vervellum | `KeyCombo` model, `CarbonHotkey`, `ShortcutRecorder`; macOS app only |
+| Vervellum | `KeyCombo` model, `CarbonHotkey`, `ShortcutRecorder`; only the macOS app links Keycap |
 
 Every app keeps its own persisted binding type (`HotkeyBinding`,
 `HotkeyCombination`, `HotkeySpec`) and its `UserDefaults` keys, and converts to
