@@ -157,6 +157,68 @@ final class CarbonHotkeyDispatchTests: XCTestCase {
         waitForExpectations(timeout: 0.3)
     }
 
+    /// Carbon delivers the press, the handler queues `onPressed` on the main
+    /// queue, and the app unregisters before that block runs (a tab closed, a
+    /// binding cleared). The queued press belongs to a registration that no
+    /// longer exists, so it must not fire.
+    func testPressQueuedBeforeUnregisterIsDropped() throws {
+        let hotkey = CarbonHotkey(identifier: 1)
+        let silence = expectation(description: "no hotkey callback")
+        silence.isInverted = true
+        hotkey.onPressed = { silence.fulfill() }
+
+        let event = try XCTUnwrap(makeHotkeyEvent(id: 1),
+                                  "failed to create synthetic Carbon event")
+        defer { ReleaseEvent(event) }
+
+        // The test runs on the main queue, so the queued callback cannot run
+        // before `unregister()` does.
+        XCTAssertEqual(hotkey.handleHotkeyEvent(event), noErr)
+        hotkey.unregister()
+        waitForExpectations(timeout: 0.3)
+    }
+
+    /// Re-registering replaces the registration, so a press queued for the
+    /// old combo must not fire after the hotkey moved to a new one.
+    func testPressQueuedBeforeReRegistrationIsDropped() throws {
+        let hotkey = CarbonHotkey(identifier: 103)
+        defer { hotkey.unregister() }
+        let modifiers = UInt32(cmdKey | optionKey | controlKey)
+        XCTAssertEqual(hotkey.register(keyCode: UInt32(kVK_F19), modifiers: modifiers), .registered)
+
+        let silence = expectation(description: "no hotkey callback")
+        silence.isInverted = true
+        hotkey.onPressed = { silence.fulfill() }
+
+        let event = try XCTUnwrap(makeHotkeyEvent(id: 103),
+                                  "failed to create synthetic Carbon event")
+        defer { ReleaseEvent(event) }
+
+        XCTAssertEqual(hotkey.handleHotkeyEvent(event), noErr)
+        XCTAssertEqual(hotkey.register(keyCode: UInt32(kVK_F20), modifiers: modifiers), .registered)
+        waitForExpectations(timeout: 0.3)
+    }
+
+    /// A press that arrives after a registration is still delivered: the
+    /// guard drops only presses that predate the current registration.
+    func testPressAfterRegistrationFires() throws {
+        let hotkey = CarbonHotkey(identifier: 104)
+        defer { hotkey.unregister() }
+        let modifiers = UInt32(cmdKey | optionKey | controlKey)
+        XCTAssertEqual(hotkey.register(keyCode: UInt32(kVK_F19), modifiers: modifiers), .registered)
+        XCTAssertEqual(hotkey.register(keyCode: UInt32(kVK_F20), modifiers: modifiers), .registered)
+
+        let fired = expectation(description: "hotkey callback")
+        hotkey.onPressed = { fired.fulfill() }
+
+        let event = try XCTUnwrap(makeHotkeyEvent(id: 104),
+                                  "failed to create synthetic Carbon event")
+        defer { ReleaseEvent(event) }
+
+        XCTAssertEqual(hotkey.handleHotkeyEvent(event), noErr)
+        waitForExpectations(timeout: 2)
+    }
+
     func testNilEventIsNotHandled() {
         let hotkey = CarbonHotkey(identifier: 1)
         let silence = expectation(description: "no hotkey callback")
