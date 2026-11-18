@@ -13,13 +13,14 @@ Released into the public domain; see `LICENSE`.
 | Gans | `KeyCombo` model, `CarbonHotkey`, `ShortcutRecorder` |
 | Top Drawer | `KeyCombo` model, `CarbonHotkeyRegistrar`, `ShortcutRecorder` |
 | Invoque | `KeyCombo` model, `CarbonHotkey`, `AccessibilityAuthorizer`; keeps its own recorder UI |
+| Vervellum | `KeyCombo` model, `CarbonHotkey`, `ShortcutRecorder`; only the macOS app links Keycap |
 
 Every app keeps its own persisted binding type (`HotkeyBinding`,
 `HotkeyCombination`, `HotkeySpec`) and its `UserDefaults` keys, and converts to
 and from `KeyCombo`. Keycap has no `Codable` types and never touches
 `UserDefaults`. Each app also passes its existing four-character Carbon
-signature (`ZAPH`, `JETY`, `GANS`, `MDRH`, `INVQ`) so the wire format does not
-change.
+signature (`ZAPH`, `JETY`, `GANS`, `MDRH`, `INVQ`, `VRVL`) so the wire format
+does not change.
 
 ## API overview
 
@@ -161,3 +162,25 @@ Invoque:
 - Registration failures are classified and rolled back (Invoque already rolled
   back).
 - `AccessibilityAuthorizer` keeps `hasPrompted` and the modern Settings URL.
+
+Vervellum:
+
+- ⌘ or ⇧⌘ with Q, W, H, M, Space or Tab, and ⇧⌘3–6, are refused; Vervellum
+  accepted any shortcut with ⌘, ⌃ or ⌥. A refused shortcut saved earlier is
+  not registered, and Settings ▸ Shortcuts says why.
+- Bare function keys (F1–F20) are accepted; Vervellum's recorder beeped.
+- Escape cancels recording even with modifiers held (Vervellum recorded ⌘Esc
+  as a shortcut), Space or Return starts recording when the recorder has
+  focus, and held modifiers show while recording.
+- Bare ⌫ still leaves the shortcut alone and keeps recording
+  (`deleteAction: .ignore`): every Vervellum shortcut has a key, and its
+  Enabled toggle turns it off.
+- The recorder names keypad Enter `⌅`, function keys `F1`–`F20`, Help and
+  keypad Clear `⌧`, and a newly recorded shortcut stores those names. The
+  panel's hint shows the stored name, so a shortcut saved earlier with
+  Vervellum's old `↩` or `Key <code>` keeps it there until it is recorded
+  again.
+- The recorder gains a VoiceOver label and value.
+- Registration keeps Vervellum's two `CarbonHotkey` instances (identifiers 1
+  and 2) and its `UserDefaults` JSON; only the macOS app links Keycap, and the
+  Linux build is unchanged.

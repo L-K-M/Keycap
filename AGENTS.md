@@ -4,7 +4,8 @@ Guidance for AI coding agents working in the **Keycap** repository.
 
 ## What Keycap Is
 
-The global-hotkey kit shared by Zap, Jetty, Invoque, Top Drawer and Gans:
+The global-hotkey kit shared by Zap, Jetty, Invoque, Top Drawer, Gans and
+Vervellum:
 Carbon `RegisterEventHotKey` registration (no Accessibility permission
 needed), the key-combo model and its display string, the rules for which
 combinations make a usable global hotkey, and the shortcut recorder.
