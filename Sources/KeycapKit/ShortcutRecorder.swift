@@ -146,7 +146,10 @@ public final class ShortcutRecorderButton: NSButton {
             keyDown(with: event)
             return true
         }
-        if isArmKey(event) {
+        // AppKit offers key equivalents to every view in the window, so only
+        // arm when this button has keyboard focus; otherwise Return would start
+        // recording instead of reaching the window's default button.
+        if isArmKey(event), window?.firstResponder === self {
             beginRecording()
             return true
         }

@@ -13,9 +13,11 @@ import KeycapCore
 /// and `onPressed` are all main-thread confined (the Carbon handler fires on the
 /// main run loop).
 ///
-/// The four-character `signature` is per app and must stay that way. Two apps
-/// that both use identifier 1 would claim the same Carbon event if they shared a
-/// signature, so each app passes its existing constant.
+/// The four-character `signature` plus `identifier` is how this hotkey's
+/// handler recognises its own events among the other handlers installed on the
+/// same application event target. Hotkey events never cross processes, so the
+/// signature only has to be unique within an app; each app passes the constant
+/// it already used so nothing changes for it.
 public final class CarbonHotkey: @unchecked Sendable {
 
     /// Signature for a new consumer that has no existing Carbon constant.
@@ -39,7 +41,10 @@ public final class CarbonHotkey: @unchecked Sendable {
         )
     }
 
-    deinit { unregister() }
+    // No main-thread precondition here: the last reference can be dropped on
+    // any thread, and trapping in deinit would crash a release build. Carbon's
+    // remove calls are safe to make once nothing else can reach this object.
+    deinit { teardown() }
 
     /// Handles a `kEventHotKeyPressed` event delivered to the installed handler.
     ///
@@ -134,6 +139,10 @@ public final class CarbonHotkey: @unchecked Sendable {
     /// Releases the hotkey and removes the event handler. Idempotent.
     public func unregister() {
         dispatchPrecondition(condition: .onQueue(.main))
+        teardown()
+    }
+
+    private func teardown() {
         if let hotKeyRef {
             UnregisterEventHotKey(hotKeyRef)
             self.hotKeyRef = nil
