@@ -1,6 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.1.1
+
+- `CarbonHotkey` drops a press that Carbon reported before the hotkey was
+  unregistered or moved to another combo. The callback runs on a later
+  main-queue turn, so a press arriving just as the user cleared or changed a
+  binding used to fire the old action anyway. From Top Drawer's open PR #192.
+- `ShortcutRecorder` gains an optional `onRecordingChange` callback that
+  reports when recording starts and stops, so an app can hide controls such
+  as a separate Clear button while the recorder is listening. It is delivered
+  on the next main-queue turn so it can update SwiftUI state.
+
+## 0.1.0
 
 - `KeycapCore`: new Foundation-only target. `KeyCombo`, `KeyNames`, `KeyCode`
   and `HotkeyModifiers` come from Invoque's `HotkeyCombination`, Top Drawer's
