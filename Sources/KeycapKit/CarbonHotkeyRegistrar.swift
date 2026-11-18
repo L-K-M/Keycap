@@ -17,8 +17,9 @@ public final class CarbonHotkeyRegistrar: GlobalHotkeyRegistering {
     private let signature: OSType
 
     /// - Parameter signature: the app's existing four-character Carbon
-    ///   signature. It must stay per app so two apps using the same id do not
-    ///   claim the same event.
+    ///   signature. Together with the minted id it lets each hotkey's handler
+    ///   recognise its own events within the app; keeping the app's constant
+    ///   means nothing changes for it.
     public init(signature: OSType) {
         self.signature = signature
     }
