@@ -5,7 +5,8 @@ import KeycapCore
 /// A SwiftUI control that records a global shortcut. Click it, press the
 /// desired modifier+key combination, and it reports a new `KeyCombo`. Escape
 /// cancels; a bare ⌫/⌦ applies `deleteAction`; a combo that is not a usable
-/// global hotkey beeps and keeps recording.
+/// global hotkey beeps and keeps recording. `onRecordingChange`, if set,
+/// learns when recording starts and stops.
 public struct ShortcutRecorder: NSViewRepresentable {
 
     /// What a bare ⌫/⌦ does while recording.
@@ -22,15 +23,22 @@ public struct ShortcutRecorder: NSViewRepresentable {
     public var deleteAction: DeleteAction
     public var placeholder: String
     public var recordingPrompt: String
+    /// Called with `true` when the recorder starts recording and `false` when
+    /// it stops (a combo was committed or deleted, Escape, or focus loss). It
+    /// runs on the main queue on the turn after the change, so it may update
+    /// SwiftUI state.
+    public var onRecordingChange: ((Bool) -> Void)?
 
     public init(combo: Binding<KeyCombo?>,
                 deleteAction: DeleteAction = .clear,
                 placeholder: String = "Record Shortcut",
-                recordingPrompt: String = "Type Shortcut…") {
+                recordingPrompt: String = "Type Shortcut…",
+                onRecordingChange: ((Bool) -> Void)? = nil) {
         self._combo = combo
         self.deleteAction = deleteAction
         self.placeholder = placeholder
         self.recordingPrompt = recordingPrompt
+        self.onRecordingChange = onRecordingChange
     }
 
     public func makeNSView(context: Context) -> ShortcutRecorderButton {
@@ -41,6 +49,7 @@ public struct ShortcutRecorder: NSViewRepresentable {
         button.combo = combo
         button.placeholder = placeholder
         button.recordingPrompt = recordingPrompt
+        button.onRecordingChange = Self.deferredRecordingHandler(onRecordingChange)
         button.isEnabled = context.environment.isEnabled
         return button
     }
@@ -54,12 +63,25 @@ public struct ShortcutRecorder: NSViewRepresentable {
         nsView.deleteAction = deleteAction
         nsView.placeholder = placeholder
         nsView.recordingPrompt = recordingPrompt
+        nsView.onRecordingChange = Self.deferredRecordingHandler(onRecordingChange)
         // Forward SwiftUI's `.disabled(...)` to the button — an
         // NSViewRepresentable doesn't propagate it automatically, so a
         // switched-off recorder would still record and rewrite the binding
         // despite looking dimmed.
         nsView.isEnabled = context.environment.isEnabled
         nsView.refreshTitle()
+    }
+
+    /// Wraps `handler` so each change arrives on the next main-queue turn.
+    /// Focus loss can end recording while SwiftUI is updating the view (the
+    /// recorder leaving its window resigns first responder), and writing view
+    /// state from inside an update is undefined behaviour. The main queue is
+    /// FIFO, so changes still arrive in order.
+    static func deferredRecordingHandler(_ handler: ((Bool) -> Void)?) -> ((Bool) -> Void)? {
+        guard let handler else { return nil }
+        return { isRecording in
+            DispatchQueue.main.async { handler(isRecording) }
+        }
     }
 }
 
@@ -92,9 +114,14 @@ public final class ShortcutRecorderButton: NSButton {
     var recordingPrompt = "Type Shortcut…"
     var deleteAction: ShortcutRecorder.DeleteAction = .clear
     var onChange: ((KeyCombo?) -> Void)?
+    /// Called synchronously whenever `recording` actually changes.
+    var onRecordingChange: ((Bool) -> Void)?
 
     private var recording = false {
-        didSet { refreshTitle() }
+        didSet {
+            refreshTitle()
+            if recording != oldValue { onRecordingChange?(recording) }
+        }
     }
 
     override public init(frame frameRect: NSRect) {

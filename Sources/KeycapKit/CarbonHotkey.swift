@@ -30,6 +30,10 @@ public final class CarbonHotkey: @unchecked Sendable {
     private let signature: OSType
     private var hotKeyRef: EventHotKeyRef?
     private var eventHandler: EventHandlerRef?
+    /// Advances whenever a registration ends (unregister, re-register or a
+    /// failed register). A press is delivered only if the counter has not moved
+    /// since Carbon reported it; see `handleHotkeyEvent(_:)`.
+    private var registrationGeneration: UInt64 = 0
     private let logger: Logger
 
     public init(identifier: UInt32, signature: OSType = CarbonHotkey.defaultSignature) {
@@ -54,6 +58,11 @@ public final class CarbonHotkey: @unchecked Sendable {
     /// `kEventParamDirectObject` hotkey ID, or a signature/ID that is not this
     /// hotkey's returns `eventNotHandledErr`. Only a matching event schedules
     /// `onPressed` on the main queue and returns `noErr`.
+    ///
+    /// The callback runs on a later main-queue turn, so the app can unregister
+    /// (or move the hotkey to another combo) in between. Such a press belongs
+    /// to a registration that no longer exists and is dropped, rather than
+    /// firing an action the user has just switched off.
     func handleHotkeyEvent(_ event: EventRef?) -> OSStatus {
         guard let event else { return OSStatus(eventNotHandledErr) }
 
@@ -73,7 +82,11 @@ public final class CarbonHotkey: @unchecked Sendable {
             return OSStatus(eventNotHandledErr)
         }
 
-        DispatchQueue.main.async { [self] in onPressed?() }
+        let pressGeneration = registrationGeneration
+        DispatchQueue.main.async { [self] in
+            guard registrationGeneration == pressGeneration else { return }
+            onPressed?()
+        }
         return noErr
     }
 
@@ -143,6 +156,7 @@ public final class CarbonHotkey: @unchecked Sendable {
     }
 
     private func teardown() {
+        registrationGeneration &+= 1
         if let hotKeyRef {
             UnregisterEventHotKey(hotKeyRef)
             self.hotKeyRef = nil
