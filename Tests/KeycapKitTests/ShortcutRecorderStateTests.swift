@@ -47,6 +47,8 @@ final class ShortcutRecorderStateTests: XCTestCase {
 
     func testClickStartsRecordingAndEscapeStopsIt() throws {
         button.performClick(nil)
+        XCTAssertIdentical(window.firstResponder, button,
+                           "clicking the recorder must make it first responder")
         XCTAssertEqual(states, [true])
 
         button.keyDown(with: try key(UInt16(KeyCode.escape), characters: "\u{1b}"))
@@ -81,6 +83,16 @@ final class ShortcutRecorderStateTests: XCTestCase {
         button.performClick(nil)
         button.performClick(nil)
         XCTAssertEqual(states, [true])
+    }
+
+    /// Disabling the control resigns it as first responder, so an in-flight
+    /// recording stops and reports `false` rather than leaving the app's UI
+    /// stuck with the recorder still swallowing keys.
+    func testDisablingStopsRecording() {
+        button.performClick(nil)
+        button.isEnabled = false
+        XCTAssertEqual(states, [true, false])
+        XCTAssertEqual(button.title, "Record Shortcut")
     }
 
     /// SwiftUI can end recording in the middle of a view update (the recorder

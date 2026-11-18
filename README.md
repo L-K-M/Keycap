@@ -71,7 +71,8 @@ struct ShortcutsSettings: View {
 
 To react while the recorder is listening, for example to hide a separate
 Clear button that would otherwise take the next click, pass
-`onRecordingChange`. It runs on the main queue just after each change:
+`onRecordingChange`. It runs on the main queue on the turn after each
+change, in order:
 
 ```swift
 struct ShortcutsSettings: View {
