@@ -69,6 +69,27 @@ struct ShortcutsSettings: View {
 }
 ```
 
+To react while the recorder is listening, for example to hide a separate
+Clear button that would otherwise take the next click, pass
+`onRecordingChange`. It runs on the main queue just after each change:
+
+```swift
+struct ShortcutsSettings: View {
+    @Binding var combo: KeyCombo?
+    @State private var isRecording = false
+
+    var body: some View {
+        HStack {
+            ShortcutRecorder(combo: $combo,
+                             onRecordingChange: { isRecording = $0 })
+            if combo != nil && !isRecording {
+                Button("Clear") { combo = nil }
+            }
+        }
+    }
+}
+```
+
 With an app-owned persisted type, convert at the boundary:
 
 ```swift
