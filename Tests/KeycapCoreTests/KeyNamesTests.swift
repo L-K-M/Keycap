@@ -25,6 +25,21 @@ final class KeyNamesTests: XCTestCase {
         XCTAssertEqual(KeyNames.symbol(for: KeyCode.f20), "F20")
     }
 
+    /// F13 to F20 have no contiguous key codes (F16 is 0x6A, F17 0x40), so a
+    /// table built from ranges would miss them. Ported from Top Drawer's
+    /// `testExtendedFunctionKeysHaveNames`.
+    func testEveryFunctionKeyHasItsName() {
+        let functionKeys: [UInt32] = [
+            KeyCode.f1, KeyCode.f2, KeyCode.f3, KeyCode.f4, KeyCode.f5,
+            KeyCode.f6, KeyCode.f7, KeyCode.f8, KeyCode.f9, KeyCode.f10,
+            KeyCode.f11, KeyCode.f12, KeyCode.f13, KeyCode.f14, KeyCode.f15,
+            KeyCode.f16, KeyCode.f17, KeyCode.f18, KeyCode.f19, KeyCode.f20,
+        ]
+        for (index, keyCode) in functionKeys.enumerated() {
+            XCTAssertEqual(KeyNames.symbol(for: keyCode), "F\(index + 1)")
+        }
+    }
+
     func testSymbolNamesLettersAndDigitsAsUppercase() {
         XCTAssertEqual(KeyNames.symbol(for: KeyCode.a), "A")
         XCTAssertEqual(KeyNames.symbol(for: KeyCode.z), "Z")
