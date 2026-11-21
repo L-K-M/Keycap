@@ -175,11 +175,10 @@ Vervellum:
 - Bare ⌫ still leaves the shortcut alone and keeps recording
   (`deleteAction: .ignore`): every Vervellum shortcut has a key, and its
   Enabled toggle turns it off.
-- The recorder names keypad Enter `⌅`, function keys `F1`–`F20`, Help and
-  keypad Clear `⌧`, and a newly recorded shortcut stores those names. The
-  panel's hint shows the stored name, so a shortcut saved earlier with
-  Vervellum's old `↩` or `Key <code>` keeps it there until it is recorded
-  again.
+- The recorder and panel hint use the same names from Keycap, including
+  keypad Enter `⌅`, function keys `F1`–`F20`, Help and keypad Clear `⌧`.
+  Existing shortcuts show those names automatically and keep their stored
+  labels for compatibility.
 - The recorder gains a VoiceOver label and value.
 - Registration keeps Vervellum's two `CarbonHotkey` instances (identifiers 1
   and 2) and its `UserDefaults` JSON; only the macOS app links Keycap, and the
